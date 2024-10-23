@@ -1,4 +1,4 @@
-import * as pc from "../node_modules/playcanvas";
+import * as pc from "playcanvas";
 import TWEEN from '@tweenjs/tween.js';
 import { timer, addTimer, subTimer } from "./timer";
 import { addScore } from "./score";

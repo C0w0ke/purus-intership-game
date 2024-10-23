@@ -39,6 +39,6 @@ export function GameOver(){
         window.location.href = "index.html";
     });
     document.getElementById("home-button").addEventListener("click", () => {
-        window.location.href = "../index.html";
+        window.location.href = "./index.html";
     });
 }

@@ -7,6 +7,7 @@
     },
     "dependencies": {
         "@tweenjs/tween.js": "^25.0.0",
+        "ammo.js": "github:kripken/ammo.js",
         "playcanvas": "1.71.5"
     },
     "devDependencies": {

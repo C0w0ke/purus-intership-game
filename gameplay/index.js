@@ -3,6 +3,7 @@ import TWEEN from '@tweenjs/tween.js';
 import { timer, addTimer, subTimer } from "./timer";
 import { addScore } from "./score";
 import { GameOver } from "./gameOver";
+import { AmmoDebugDrawer } from "./debugDrawer.js";
 
 window.onload = () => {
 
@@ -27,6 +28,15 @@ window.onload = () => {
     const cameraOffset = new pc.Vec3(0, 1, -3);
     cameraEntity.setPosition(cameraOffset);
     cameraEntity.setEulerAngles(-10, 180, 0);
+
+    // Setup debug
+    const renderer = new AmmoDebugDrawer({
+        limit: {
+            entity: cameraEntity,
+            distance: 50
+        }
+    });
+    renderer.enabled = true;
 
     // Add light
     const light = new pc.Entity("DirectionalLight");
@@ -71,7 +81,7 @@ window.onload = () => {
         ];
         
         for (let i = 0; i < holePosition.length; i++){
-            const holeEntity = new pc.Entity("Hole ${i}");
+            const holeEntity = new pc.Entity("Hole");
             app.root.addChild(holeEntity);
             holeEntity.addComponent("model", {
                 type: "asset",
@@ -82,7 +92,7 @@ window.onload = () => {
             holeEntity.setLocalPosition(holePosition[i].x, holePosition[i].y, holePosition[i].z);
 
             // Add balls
-            const ballEntity = new pc.Entity("Ball ${i}");
+            const ballEntity = new pc.Entity("Ball");
             holeEntity.addChild(ballEntity);
             ballEntity.addComponent("model", {
                 type: "asset",
@@ -95,6 +105,9 @@ window.onload = () => {
             ballEntity.addComponent("collision", {
                 type: "sphere",
                 radius: 0.35
+            });
+            ballEntity.addComponent("rigidbody", {
+                type: "dynamic"
             });
         }
     });
@@ -120,6 +133,7 @@ window.onload = () => {
         const ballPosition = ballEntity.getLocalPosition();
         poppedBalls.push(random);
         animate(ballEntity);
+
     }
 
     function animate(e){

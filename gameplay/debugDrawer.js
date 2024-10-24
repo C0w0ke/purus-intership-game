@@ -37,11 +37,12 @@
  *   -  // Optionally specify which scene layer to draw to:
  *      const renderer = new AmmoDebugDrawer({ layer: myLayer });   // Should be of type pc.Layer (defaults to UI layer)
  */
-import * as Ammo from "../ammo/ammo.js";
+
 
 export class AmmoDebugDrawer {
     
     constructor(opts = {}) {
+        
         if (!window.Ammo) {
             console.warn('Warning! Trying to initialize Ammo Debug Drawer without Ammo lib in the project. Aborting.');
             return;

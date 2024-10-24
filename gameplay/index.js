@@ -109,6 +109,19 @@ window.onload = () => {
             ballEntity.addComponent("rigidbody", {
                 type: "dynamic"
             });
+            canvas.addEventListener("click", (e) => {
+                const mouseX = e.clientX;
+                const mouseY = e.clientY;
+                const mousePosition = new pc.Vec2(mouseX, mouseY);
+                const from = cameraEntity.getPosition();
+                const to = cameraEntity.camera.screenToWorld(mousePosition.x, mousePosition.y, cameraEntity.camera.farClip);
+                const result = app.systems.rigidbody.raycastFirst(from, to);
+                if(result){
+                    const hit = result.entity;
+                    if(hit.name == "Ball")
+                        console.log(ballEntity.getPosition());
+                }
+            });
         }
     });
 
@@ -130,7 +143,6 @@ window.onload = () => {
         }
 
         const ballEntity = ballEntities[random];
-        const ballPosition = ballEntity.getLocalPosition();
         poppedBalls.push(random);
         animate(ballEntity);
 

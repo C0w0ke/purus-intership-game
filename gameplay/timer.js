@@ -1,4 +1,4 @@
-export let timer = 20;
+export let timer = 30;
 
 let timerInterval;
 let timerElement;

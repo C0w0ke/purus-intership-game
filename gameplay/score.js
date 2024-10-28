@@ -1,3 +1,5 @@
+import { increaseLevel } from "./level.js";
+
 export let score = 0;
 
 let scoreElement;
@@ -28,4 +30,11 @@ export function addScore(){
     score++;
     updateScore(score);
     //console.log("Score added!");
+    increaseLevel();
 }
+
+export const sounds = {
+    hit: new Audio('../assets/smash.mp3'),
+    miss: new Audio('../assets/pop.mp3'),
+    lose: new Audio('../assets/fart.mp3')
+};

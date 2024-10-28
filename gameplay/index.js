@@ -1,10 +1,10 @@
 import * as pc from "playcanvas";
-import TWEEN from '@tweenjs/tween.js';
+import * as TWEEN from '@tweenjs/tween.js';
 import { timer, addTimer, subTimer } from "./timer";
-import { addScore, score } from "./score";
+import { addScore, score, sounds } from "./score";
 import { GameOver } from "./gameOver";
+import { speed, duration, bombChance, cd } from "./level.js";
 import { AmmoDebugDrawer } from "./debugDrawer.js";
-import { random } from "playcanvas/build/playcanvas/src/core/math/random.js";
 
 window.onload = () => {
 
@@ -42,11 +42,15 @@ window.onload = () => {
 
     // Load assets
     const assets = {
-        holeAsset: new pc.Asset("hole_model", "model", { url: "../assets/models/hoop_teamYellow.gltf.glb"}),
-        ballAsset: new pc.Asset("ball_model", "model", { url: "../assets/models/ball_teamYellow.gltf.glb"})
+        holeYellowAsset: new pc.Asset("hole_model", "model", { url: "../assets/models/hoop_teamYellow.gltf.glb"}),
+        holeRedAsset: new pc.Asset("hole_model", "model", { url: "../assets/models/hoop_teamRed.gltf.glb"}),
+        ballAsset: new pc.Asset("ball_model", "model", { url: "../assets/models/ball_teamYellow.gltf.glb"}),
+        bombAsset: new pc.Asset("bomb_model", "model", { url: "../assets/models/bomb_teamRed.gltf.glb"}),
     }
     const assetListLoader = new pc.AssetListLoader(Object.values(assets), app.assets);
     const ballEntities = [];
+    const bombEntities = [];
+    const redHoleEntities = [];
     assetListLoader.load(() => {
 
         // Create a plane
@@ -73,15 +77,27 @@ window.onload = () => {
         ];
         
         for (let i = 0; i < holePosition.length; i++){
-            const holeEntity = new pc.Entity("Hole");
+            const holeEntity = new pc.Entity("YellowHole");
             app.root.addChild(holeEntity);
             holeEntity.addComponent("model", {
                 type: "asset",
-                asset: assets.holeAsset
+                asset: assets.holeYellowAsset
             });
             const scale = 0.2;
             holeEntity.setLocalScale(scale, scale, scale);
             holeEntity.setLocalPosition(holePosition[i].x, holePosition[i].y, holePosition[i].z);
+
+            // Add red holes
+            const redHole = new pc.Entity("RedHole");
+            holeEntity.addChild(redHole);
+            redHole.addComponent("model", {
+                type: "asset",
+                asset: assets.holeRedAsset
+            });
+            const scale2 = 1;
+            redHole.setLocalScale(scale2, scale2, scale2);
+            redHole.setLocalPosition(0, 0, 0);
+            redHoleEntities.push(redHole);
 
             // Add balls
             const ballEntity = new pc.Entity("Ball");
@@ -94,13 +110,16 @@ window.onload = () => {
             ballEntity.setLocalPosition(0, 2, 0);
             ballEntities.push(ballEntity);
 
-            ballEntity.addComponent("collision", {
-                type: "sphere",
-                radius: 0.35
+            // Add bombs
+            const bombEntity = new pc.Entity("Bomb");
+            holeEntity.addChild(bombEntity);
+            bombEntity.addComponent("model", {
+                type: "asset",
+                asset: assets.bombAsset
             });
-            ballEntity.addComponent("rigidbody", {
-                type: "dynamic"
-            });
+            bombEntity.setLocalScale(1.5, 1.5, 1.5);
+            bombEntity.setLocalPosition(0, 1, 0);
+            bombEntities.push(bombEntity);
         }
     });
 
@@ -116,6 +135,8 @@ window.onload = () => {
         'E': 8
     };
 
+    let t = [];
+    let canHit = false;
     let poppedBalls = [];
     const cooldowns = new Set();
     function popUpBall(){
@@ -137,74 +158,80 @@ window.onload = () => {
         const ballEntity = ballEntities[random];
         poppedBalls.push(random);
 
-        animateUp(ballEntity);
-        hitBall(ballEntity);
-        animateDown(ballEntity, random);
-
         console.log(poppedBalls);
         console.log(cooldowns);
 
+        // Pop and enable hit
+        ballEntity.setLocalPosition(0, 3, 0);
+        canHit = true;
+        hitBall(ballEntity);
+
+        t[random] = setTimeout(() => {
+
+            ballEntity.setLocalPosition(0, 1, 0);
+
+            const redHole = redHoleEntities[random];
+            redHole.setLocalPosition(0, 0.01, 0);
+            setTimeout(() => {
+                redHole.setLocalPosition(0, 0, 0);
+            }, 150);
+
+            subTimer();
+
+            poppedBalls.splice(poppedBalls.indexOf(random), 1);
+            setTimeout(() => {
+                cooldowns.delete(random);
+            }, cd);
+            
+
+        }, duration);
+
     }
 
-    function animateUp(e){
-        const startPosition = new pc.Vec3(0, 2, 0);
-        const endPosition = new pc.Vec3(0, 3, 0);
-        const duration = 100;
-        let elapsedUp = 0;
-        const popUpInterval = setInterval(() => {
-            elapsedUp += 16;
-            const tUp = Math.min(elapsedUp/duration, 1);
-            const upY = lerp(startPosition.y, endPosition.y, tUp);
-            e.setLocalPosition(0, upY, 0);
-            if(tUp >= 1){
-                clearInterval(popUpInterval);
-            }
-        }, 16);
-    }
-
-    let t;
-    function animateDown(e, index){
-        const startPosition = new pc.Vec3(0, 2, 0);
-        const endPosition = new pc.Vec3(0, 3, 0);
-        const duration = 100;
-        let elapsedDown = 0;
-        t = setTimeout(() => {
-            const downInterval = setInterval(() => {
-                elapsedDown += 16;
-                const tDown = Math.min(elapsedDown/duration, 1);
-                const downY = lerp(endPosition.y, startPosition.y, tDown);
-                e.setLocalPosition(0, downY, 0);
-                if(tDown >= 1){
-                    subTimer();
-                    clearInterval(downInterval);
-                    poppedBalls.splice(poppedBalls.indexOf(index), 1);
-                    setTimeout(() => {
-                        cooldowns.delete(index);
-                    }, 1000);
-                }
-            }, 16);
-        }, 2000);
+    function popUpBomb(){
+        const random = Math.floor(Math.random() * bombEntities.length);
+        const bombEntity = bombEntities[random];
+        if(Math.random() < bombChance && !poppedBalls.includes(random)){
+            poppedBalls.push(random);
+            bombEntity.setLocalPosition(0, 2.7, 0);
+            setTimeout(() => {
+                bombEntity.setLocalPosition(0, 1, 0);
+                poppedBalls.splice(poppedBalls.indexOf(random), 1);
+            }, 1000);
+        } else {
+            popUpBall();
+        }
     }
 
     function hitBall(e){
         window.addEventListener('keydown', (event) => {
             const holeIndex = keyMapping[event.key.toUpperCase()];
-            if(holeIndex !== undefined && poppedBalls.includes(holeIndex)){
-                e = ballEntities[holeIndex];
-                e.setLocalPosition(0, 2, 0);
-                addScore();
-                poppedBalls.splice(poppedBalls.indexOf(holeIndex), 1);
-                setTimeout(() => {
-                    cooldowns.delete(holeIndex);
-                }, 1000);
-                console.log(`delete ${holeIndex}`);
-                clearTimeout(t);
+
+            if(holeIndex !== undefined && canHit){
+                if(bombEntities[holeIndex].getLocalPosition().y === 2.7){
+                    sounds['lose'].play();
+                    app.destroy();
+                    GameOver(score);
+                    clearInterval(s);
+                    return;
+                }
+                if(poppedBalls.includes(holeIndex)){
+
+                    sounds['hit'].play();
+                    addScore();
+                    addTimer();
+
+                    e = ballEntities[holeIndex];
+                    e.setLocalPosition(0, 1, 0);
+                    poppedBalls.splice(poppedBalls.indexOf(holeIndex), 1);
+                    setTimeout(() => {
+                        cooldowns.delete(holeIndex);
+                    }, 1000);
+                    console.log(`delete ${holeIndex}`);
+                    clearTimeout(t[holeIndex]);
+                }
             }
         });
-    }
-
-    function lerp(start, end, t){
-        return start + (end - start) * t;
     }
 
     let s = setInterval(() => {
@@ -213,8 +240,8 @@ window.onload = () => {
             GameOver(score);
             clearInterval(s);
         } else {
-            popUpBall();
+            popUpBomb();
         }
-    }, 450);
+    }, speed);
     
 }

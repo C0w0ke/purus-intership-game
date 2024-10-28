@@ -1,9 +1,10 @@
 import * as pc from "playcanvas";
 import TWEEN from '@tweenjs/tween.js';
 import { timer, addTimer, subTimer } from "./timer";
-import { addScore } from "./score";
+import { addScore, score } from "./score";
 import { GameOver } from "./gameOver";
 import { AmmoDebugDrawer } from "./debugDrawer.js";
+import { random } from "playcanvas/build/playcanvas/src/core/math/random.js";
 
 window.onload = () => {
 
@@ -28,15 +29,6 @@ window.onload = () => {
     const cameraOffset = new pc.Vec3(0, 1, -3);
     cameraEntity.setPosition(cameraOffset);
     cameraEntity.setEulerAngles(-10, 180, 0);
-
-    // Setup debug
-    const renderer = new AmmoDebugDrawer({
-        limit: {
-            entity: cameraEntity,
-            distance: 50
-        }
-    });
-    renderer.enabled = true;
 
     // Add light
     const light = new pc.Entity("DirectionalLight");
@@ -99,7 +91,7 @@ window.onload = () => {
                 asset: assets.ballAsset
             });
             ballEntity.setLocalScale(0.7, 0.7, 0.7);
-            ballEntity.setLocalPosition(0, 1, 0);
+            ballEntity.setLocalPosition(0, 2, 0);
             ballEntities.push(ballEntity);
 
             ballEntity.addComponent("collision", {
@@ -109,84 +101,116 @@ window.onload = () => {
             ballEntity.addComponent("rigidbody", {
                 type: "dynamic"
             });
-            canvas.addEventListener("click", (e) => {
-                const mouseX = e.clientX;
-                const mouseY = e.clientY;
-                const mousePosition = new pc.Vec2(mouseX, mouseY);
-                const from = cameraEntity.getPosition();
-                const to = cameraEntity.camera.screenToWorld(mousePosition.x, mousePosition.y, cameraEntity.camera.farClip);
-                const result = app.systems.rigidbody.raycastFirst(from, to);
-                if(result){
-                    const hit = result.entity;
-                    if(hit.name == "Ball")
-                        console.log(ballEntity.getPosition());
-                }
-            });
         }
     });
 
+    const keyMapping = {
+        'S': 0,
+        'A': 1,
+        'D': 2,
+        'W': 3,
+        'Z': 4,
+        'C': 5,
+        'X': 6,
+        'Q': 7,
+        'E': 8
+    };
+
     let poppedBalls = [];
+    const cooldowns = new Set();
     function popUpBall(){
         let random;
         let attempts = 0;
-        const maxAttempts = ballEntities.length; 
+        const maxAttempts = ballEntities.length;
         while(true){
             random = Math.floor(Math.random() * ballEntities.length);
-            if(!poppedBalls.includes(random)){
+            if(!poppedBalls.includes(random) && !cooldowns.has(random)){
                 break;
             }
             attempts++;   
             if(attempts > maxAttempts){
-                // console.error("Failed to find a free ball entity after", maxAttempts, "attempts.");
+                //console.error("Failed to find a free ball entity after", maxAttempts, "attempts.");
                 return;
             }
         }
-
+        cooldowns.add(random);
         const ballEntity = ballEntities[random];
         poppedBalls.push(random);
-        animate(ballEntity);
+
+        animateUp(ballEntity);
+        hitBall(ballEntity);
+        animateDown(ballEntity, random);
+
+        console.log(poppedBalls);
+        console.log(cooldowns);
 
     }
 
-    function animate(e){
-        let currentY = e.getLocalPosition().y;
-        let endY = 1.4;
-        let isMovingUp = true;
-        let hasReachedTarget = false;
-        app.on("update", (dt) => {
-            if(hasReachedTarget){
-                setTimeout(() => {
-                    hasReachedTarget = false;
-                    isMovingUp = false;
-                }, 2000);
-                return;
+    function animateUp(e){
+        const startPosition = new pc.Vec3(0, 2, 0);
+        const endPosition = new pc.Vec3(0, 3, 0);
+        const duration = 100;
+        let elapsedUp = 0;
+        const popUpInterval = setInterval(() => {
+            elapsedUp += 16;
+            const tUp = Math.min(elapsedUp/duration, 1);
+            const upY = lerp(startPosition.y, endPosition.y, tUp);
+            e.setLocalPosition(0, upY, 0);
+            if(tUp >= 1){
+                clearInterval(popUpInterval);
             }
+        }, 16);
+    }
 
-            const distanceToMove = 1 * dt;
-            let newY;
-            if(isMovingUp){
-                newY = currentY + distanceToMove;
-                if(newY >= endY){
-                    newY = endY;
-                    hasReachedTarget = true;
+    let t;
+    function animateDown(e, index){
+        const startPosition = new pc.Vec3(0, 2, 0);
+        const endPosition = new pc.Vec3(0, 3, 0);
+        const duration = 100;
+        let elapsedDown = 0;
+        t = setTimeout(() => {
+            const downInterval = setInterval(() => {
+                elapsedDown += 16;
+                const tDown = Math.min(elapsedDown/duration, 1);
+                const downY = lerp(endPosition.y, startPosition.y, tDown);
+                e.setLocalPosition(0, downY, 0);
+                if(tDown >= 1){
+                    subTimer();
+                    clearInterval(downInterval);
+                    poppedBalls.splice(poppedBalls.indexOf(index), 1);
+                    setTimeout(() => {
+                        cooldowns.delete(index);
+                    }, 1000);
                 }
-            } else {
-                newY = currentY - distanceToMove;
-                if(newY <= 1){
-                    newY = 1;
-                    isMovingUp = true;
-                    app.off("update", animate);
-                }
+            }, 16);
+        }, 2000);
+    }
+
+    function hitBall(e){
+        window.addEventListener('keydown', (event) => {
+            const holeIndex = keyMapping[event.key.toUpperCase()];
+            if(holeIndex !== undefined && poppedBalls.includes(holeIndex)){
+                e = ballEntities[holeIndex];
+                e.setLocalPosition(0, 2, 0);
+                addScore();
+                poppedBalls.splice(poppedBalls.indexOf(holeIndex), 1);
+                setTimeout(() => {
+                    cooldowns.delete(holeIndex);
+                }, 1000);
+                console.log(`delete ${holeIndex}`);
+                clearTimeout(t);
             }
-            e.translate(0, newY - currentY, 0);
-            currentY = newY;
         });
+    }
+
+    function lerp(start, end, t){
+        return start + (end - start) * t;
     }
 
     let s = setInterval(() => {
         if(timer <= 0){
-            app.timeScale = 0;
-            GameOver();
+            app.destroy();
+            GameOver(score);
             clearInterval(s);
         } else {
             popUpBall();
@@ -194,165 +218,3 @@ window.onload = () => {
     }, 450);
     
 }
-    
-    // let poppedBalls = [];
-    // const cooldowns = new Set();
-    // function popUpBall(){
-    //     let random;
-    //     let attempts = 0;
-    //     const maxAttempts = ballEntities.length;
-    //     while(true){
-    //         random = Math.floor(Math.random() * ballEntities.length);
-    //         if(!poppedBalls.includes(random) && !cooldowns.has(random)){
-    //             break;
-    //         }
-    //         attempts++;   
-    //         if(attempts > maxAttempts){
-    //             console.error("Failed to find a free ball entity after", maxAttempts, "attempts.");
-    //             return;
-    //         }
-    //     }
-    //     cooldowns.add(random);
-    //     const ballEntity = ballEntities[random];
-    //     poppedBalls.push(random);
-    //     ballEntity.setLocalPosition(0, 3, 0);
-    //     setTimeout(() => {
-    //         ballEntity.setLocalPosition(0, 1, 0);
-    //         poppedBalls.splice(poppedBalls.indexOf(random), 1);
-    //         setTimeout(() => {
-    //             cooldowns.delete(random);
-    //         }, 1000);
-    //     }, 2000);
-    // }
-
-    // setInterval(popUpBall, 450);
-
-
-
-        // function popUpBall(){
-        //     let random = Math.floor(Math.random() * ballEntities.length);
-        //     const ballEntity = ballEntities[random];
-        //     ballEntity.setLocalPosition(0, 3, 0);
-        //     setTimeout(() => {
-        //         ballEntity.setLocalPosition(0, 1, 0);
-        //     }, 2000);
-        // }
-        // setInterval(popUpBall, 450);
-
-
-        // let poppedBalls = [];
-        // const cooldowns = new Set();
-        // function popUpBall(){
-        //     let random;
-        //     let attempts = 0;
-        //     const maxAttempts = ballEntities.length;
-        //     while(true){
-        //         random = Math.floor(Math.random() * ballEntities.length);
-        //         if(!poppedBalls.includes(random) && !cooldowns.has(random)){
-        //             break;
-        //         }
-        //         attempts++;   
-        //         if(attempts > maxAttempts){
-        //             console.error("Failed to find a free ball entity after", maxAttempts, "attempts.");
-        //             return;
-        //         }
-        //     }
-        //     cooldowns.add(random);
-        //     const ballEntity = ballEntities[random];
-        //     poppedBalls.push(random);
-
-        //     let startY = ballEntity.getLocalPosition().y;
-        //     let endY = 3;
-        //     let duration = 400;
-        //     let startTime = Date.now();
-
-        //     function update(){
-        //         let currentTime = Date.now();
-        //         let progress = (currentTime - startTime) / duration;
-        //         let newY = startY + (endY - startY) * progress;
-
-        //         ballEntity.translateLocal(0, newY - ballEntity.getLocalPosition().y, 0);
-
-        //         if(progress < 1){
-        //             requestAnimationFrame(update);
-        //         } else {
-        //             setTimeout(() => {
-        //                 startY = ballEntity.getLocalPosition().y;
-        //                 endY = 1;
-        //                 startTime = Date.now();
-        //                 poppedBalls.splice(poppedBalls.indexOf(random), 1);  
-        //                 setTimeout(() => {
-        //                     cooldowns.delete(random);
-        //                 }, 1000);
-        //                 update();
-        //             }, 2000);
-        //         }
-
-        //     }
-
-        //     update();
-        
-        // }
-
-        // setInterval(popUpBall, 450);
-
-
-
-
-        // let poppedBalls = [];
-        // function popUpBall(){
-        //     let random;
-        //     let attempts = 0;
-        //     const maxAttempts = ballEntities.length; 
-        //     while(true){
-        //         random = Math.floor(Math.random() * ballEntities.length);
-        //         if(!poppedBalls.includes(random)){
-        //             break;
-        //         }
-        //         attempts++;   
-        //         if(attempts > maxAttempts){
-        //             // console.error("Failed to find a free ball entity after", maxAttempts, "attempts.");
-        //             return;
-        //         }
-        //     }
-    
-        //     const ballEntity = ballEntities[random];
-        //     poppedBalls.push(random);
-        //     animate(ballEntity);
-        //     console.log(poppedBalls);
-        // }
-    
-        // function animate(e){
-        //     let currentY = e.getLocalPosition().y;
-        //     let endY = 1.4;
-        //     let isMovingUp = true;
-        //     let hasReachedTarget = false;
-        //     app.on("update", (dt) => {
-        //         if(hasReachedTarget){
-        //             setTimeout(() => {
-        //                 hasReachedTarget = false;
-        //                 isMovingUp = false;
-        //             }, 2000);
-        //             return;
-        //         }
-    
-        //         const distanceToMove = 1 * dt;
-        //         let newY;
-        //         if(isMovingUp){
-        //             newY = currentY + distanceToMove;
-        //             if(newY >= endY){
-        //                 newY = endY;
-        //                 hasReachedTarget = true;
-        //             }
-        //         } else {
-        //             newY = currentY - distanceToMove;
-        //             if(newY <= 1){
-        //                 newY = 1;
-        //                 isMovingUp = true;
-        //                 app.off("update", popUpBall);
-        //             }
-        //         }
-        //         e.translate(0, newY - currentY, 0);
-        //         currentY = newY;
-        //     });
-        // }

@@ -1,4 +1,4 @@
-export function GameOver(){
+export function GameOver(finalScore){
     const gameOver = document.createElement("div");
     gameOver.style.fontFamily = "Arial";
     gameOver.style.fontSize = "50px";
@@ -16,6 +16,7 @@ export function GameOver(){
     gameOver.style.userSelect = "none";
     gameOver.innerHTML = `
         <div>Game Over</div>
+        <div>Final Score: ${finalScore}</div>
         <button id="retry-button">RETRY</button>
         <button id="home-button">EXIT</button>
         <style>

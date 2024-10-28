@@ -27,5 +27,5 @@ function updateScore(s){
 export function addScore(){
     score++;
     updateScore(score);
-    console.log("Score added!");
+    //console.log("Score added!");
 }

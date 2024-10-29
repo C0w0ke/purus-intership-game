@@ -46,6 +46,7 @@ window.onload = () => {
         holeRedAsset: new pc.Asset("hole_model", "model", { url: "../assets/models/hoop_teamRed.gltf.glb"}),
         ballAsset: new pc.Asset("ball_model", "model", { url: "../assets/models/ball_teamYellow.gltf.glb"}),
         bombAsset: new pc.Asset("bomb_model", "model", { url: "../assets/models/bomb_teamRed.gltf.glb"}),
+        specialBallAsset: new pc.Asset("bomb_model", "model", { url: "../assets/models/ball_teamBlue.gltf.glb"})
     }
     const assetListLoader = new pc.AssetListLoader(Object.values(assets), app.assets);
     const ballEntities = [];
@@ -243,5 +244,23 @@ window.onload = () => {
             popUpBomb();
         }
     }, speed);
+
+    // const isSpecialBall = Math.random() < 0.2;
+    // if (isSpecialBall) {
+    //     const specialBallEntity = new pc.Entity("SpecialBall");
+    //     app.root.addChild(specialBallEntity);
+    //     specialBallEntity.addComponent("model", {
+    //         type: "asset",
+    //         asset: assets.specialBallAsset
+    //     });
+    //     specialBallEntity.setLocalScale(0.7, 0.7, 0.7);
+    //     specialBallEntity.setLocalPosition(0, 2, 0);
+    //     poppedBalls.push(random);
+    //     hitBall(specialBallEntity, true);
+    // } else {
+    //     ballEntity.setLocalPosition(0, 3, 0);
+    //     canHit = true;
+    //     hitBall(ballEntity);
+    // }
     
 }

@@ -1,33 +1,43 @@
 export function GameOver(finalScore){
+
+    const previousScore = localStorage.getItem('highScore') || 0;
+    let scoreMessage = `Final Score: ${finalScore}`;
+    if(finalScore > previousScore){
+        localStorage.setItem('highScore', finalScore);
+        scoreMessage = `New High Score: ${finalScore}`;
+    }
+
     const gameOver = document.createElement("div");
-    gameOver.style.fontFamily = "Arial";
-    gameOver.style.fontSize = "50px";
-    gameOver.style.position = "absolute";
-    gameOver.style.top = "0";
-    gameOver.style.left = "0";
-    gameOver.style.width = "100%";
-    gameOver.style.height = "100%";
-    gameOver.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-    gameOver.style.color = "white";
-    gameOver.style.display = "flex";
-    gameOver.style.flexDirection = "column";
-    gameOver.style.alignItems = "center";
-    gameOver.style.justifyContent = "center";
-    gameOver.style.userSelect = "none";
+    gameOver.style.cssText = `
+        font-family: Uni-sans;
+        font-size: 85px;
+        color: white;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+    `;
     gameOver.innerHTML = `
         <div>Game Over</div>
-        <div>Final Score: ${finalScore}</div>
+        <div>${scoreMessage}</div>
         <button id="retry-button">RETRY</button>
         <button id="home-button">EXIT</button>
         <style>
             #retry-button, #home-button {
+                font-family: Uni-sans-thin;
                 margin-top: 30px;
                 font-size: 24px;
                 padding: 10px 20px;
                 border: none;
                 border-radius: 10px;
                 background-color: #c2c45a;
-                color: #ffffff;
                 cursor: pointer;
             }
             #retry-button:hover, #home-button:hover {
@@ -40,6 +50,6 @@ export function GameOver(finalScore){
         window.location.href = "index.html";
     });
     document.getElementById("home-button").addEventListener("click", () => {
-        window.location.href = "./index.html";
+        window.location.href = "../index.html";
     });
 }

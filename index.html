@@ -5,8 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mole Hammering</title>
     <style>
+        @font-face {
+            font-family: "Uni-sans";
+            src: url(/assets/fonts/Uni\ Sans\ Heavy.otf);
+        }
+        @font-face {
+            font-family: "Uni-sans-thin";
+            src: url(/assets/fonts/Uni\ Sans\ Thin\ Italic.otf);
+        }
         body {
-            font-family: Arial, sans-serif;
+            font-family: "Uni-sans";
             text-align: center;
             margin: 0;
             background-color: antiquewhite;
@@ -25,12 +33,12 @@
             user-select: none;
         }
         .start-button {
+            font-family: "Uni-sans-thin";
             font-size: 24px;
             padding: 10px 20px;
             border: none;
             border-radius: 10px;
             background-color: #c2c45a;
-            color: #ffffff;
             cursor: pointer;
             user-select: none;
         }
@@ -39,7 +47,26 @@
         }
         .start-button a {
             text-decoration: none;
-            color: #ffffff;
+            color: #000000;
+        }
+        .start-button a:hover {
+            text-decoration: none;
+            color: #ff0000;
+        }
+        #score-display {
+            font-family: "Uni-sans-thin";
+            font-size: 30px;
+            margin-top: 20px;
+            user-select: none;
+        }
+        .bottom-text{
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            color: #333;
+            user-select: none;
         }
     </style>
 </head>
@@ -49,6 +76,19 @@
         <button class="start-button">
             <a href="./gameplay/index.html">START</a>
         </button>
+        <div id="score-display">Score: 0</div>
+        <div class="bottom-text">
+            Game made by Hieu_Nguyen 11/2024
+            <div>- PURUS-GAME Internship -</div>
+        </div>
     </div>
+
+    <script>
+        const highScore = localStorage.getItem('highScore') || 0;
+        document.getElementById('score-display').innerText = `Score: ${highScore}`;
+    </script>
+
+    <script src="index.js" type="module"></script>
+
 </body>
 </html>

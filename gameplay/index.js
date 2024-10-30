@@ -1,6 +1,6 @@
 import * as pc from "playcanvas";
 import * as TWEEN from '@tweenjs/tween.js';
-import { timer, addTimer, subTimer } from "./timer";
+import { timer, addTimer, subTimer, stopTimer } from "./timer";
 import { addScore, score, sounds } from "./score";
 import { GameOver } from "./gameOver";
 import { speed, duration, bombChance, cd } from "./level.js";
@@ -210,6 +210,7 @@ window.onload = () => {
 
             if(holeIndex !== undefined && canHit){
                 if(bombEntities[holeIndex].getLocalPosition().y === 2.7){
+                    stopTimer();
                     sounds['lose'].play();
                     app.destroy();
                     GameOver(score);

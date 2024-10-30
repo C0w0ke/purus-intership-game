@@ -15,14 +15,16 @@ timerInterval = setInterval(() => {
 
 function createTimerElement(){
     timerElement = document.createElement("div");
-    timerElement.style.fontFamily = "Arial";
-    timerElement.style.fontSize = "50px";
-    timerElement.style.position = "absolute";
-    timerElement.style.top = "0";
-    timerElement.style.right = "0";
-    timerElement.style.color = "red";
-    timerElement.style.margin = "50px";
-    timerElement.style.userSelect = "none";
+    timerElement.style.cssText = `
+        font-family: Bebas;
+        font-size: 70px;
+        position: absolute;
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100%);
+        color: red;
+        user-select: none;
+    `;
     document.body.appendChild(timerElement);
 }
 
@@ -48,4 +50,8 @@ export function subTimer(){
     } else {
         return;
     }
+}
+
+export function stopTimer(){
+    clearInterval(timerInterval);
 }

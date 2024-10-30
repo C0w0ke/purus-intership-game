@@ -7,14 +7,17 @@ export let cd = 200;
 
 // Create a message element
 const messageElement = document.createElement("div");
-messageElement.style.position = "absolute";
-messageElement.style.top = "50px";
-messageElement.style.left = "50%";
-messageElement.style.transform = "translateX(-50%)";
-messageElement.style.color = "black";
-messageElement.style.fontSize = "30px";
-messageElement.style.fontFamily = "Arial, sans-serif";
-messageElement.style.display = "none";
+messageElement.style.cssText = `
+    font-family: Bebas;
+    font-size: 60px;
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%) translateY(350%);
+    color: red;
+    display: none;
+    user-select: none;
+`;
 document.body.appendChild(messageElement);
 
 function showMessage(text) {

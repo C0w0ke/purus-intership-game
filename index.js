@@ -1,5 +1,4 @@
 import * as pc from "/node_modules/playcanvas";
-//import * as TWEEN from '@tweenjs/tween.js';
 
 window.onload = () => {
 

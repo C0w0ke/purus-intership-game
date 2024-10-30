@@ -1,4 +1,5 @@
 import * as pc from "playcanvas";
+import * as TWEEN from '@tweenjs/tween.js';
 
 window.onload = () => {
 
@@ -82,6 +83,18 @@ window.onload = () => {
             holeEntity.setLocalScale(scale, scale, scale);
             holeEntity.setLocalPosition(holePosition[i].x, holePosition[i].y, holePosition[i].z);
 
+            // Add red holes
+            const redHole = new pc.Entity("RedHole");
+            holeEntity.addChild(redHole);
+            redHole.addComponent("model", {
+                type: "asset",
+                asset: assets.holeRedAsset
+            });
+            const scale2 = 1;
+            redHole.setLocalScale(scale2, scale2, scale2);
+            redHole.setLocalPosition(0, 0, 0);
+            redHoleEntities.push(redHole);
+
             // Add balls
             const ballEntity = new pc.Entity("Ball");
             holeEntity.addChild(ballEntity);
@@ -90,8 +103,106 @@ window.onload = () => {
                 asset: assets.ballAsset
             });
             ballEntity.setLocalScale(0.7, 0.7, 0.7);
-            ballEntity.setLocalPosition(0, 3, 0);
+            ballEntity.setLocalPosition(0, 2, 0);
             ballEntities.push(ballEntity);
         }
     });
+
+    const keyMapping = {
+        'S': 0,
+        'A': 1,
+        'D': 2,
+        'W': 3,
+        'Z': 4,
+        'C': 5,
+        'X': 6,
+        'Q': 7,
+        'E': 8
+    };
+
+    let poppedBalls = [];
+    const cooldowns = new Set();
+    function popUpBall(){
+        let random;
+        let attempts = 0;
+        const maxAttempts = ballEntities.length;
+        while(true){
+            random = Math.floor(Math.random() * ballEntities.length);
+            if(!poppedBalls.includes(random) && !cooldowns.has(random)){
+                break;
+            }
+            attempts++;   
+            if(attempts > maxAttempts){
+                //console.error("Failed to find a free ball entity after", maxAttempts, "attempts.");
+                return;
+            }
+        }
+        cooldowns.add(random);
+        const ballEntity = ballEntities[random];
+        poppedBalls.push(random);
+
+        animateUp(ballEntity);
+        hitBall(ballEntity);
+        animateDown(ballEntity, random);
+
+        // console.log(poppedBalls);
+        // console.log(cooldowns);
+
+    }
+
+    const startPosition = new pc.Vec3(0, 2, 0);
+    const endPosition = new pc.Vec3(0, 3, 0);
+    const duration = 100;
+    let canHit = false;
+
+    function animateUp(e){
+        let elapsedUp = 0;
+        const popUpInterval = setInterval(() => {
+            elapsedUp += 16;
+            const tUp = Math.min(elapsedUp/duration, 1);
+            const upY = lerp(startPosition.y, endPosition.y, tUp);
+            e.setLocalPosition(0, upY, 0);
+            if(tUp >= 1){
+                clearInterval(popUpInterval);
+                return canHit = true;
+            }
+        }, 16);
+    }
+
+    const timeouts = [];
+    function animateDown(e, index){
+        let elapsedDown = 0;
+        timeouts[index] = setTimeout(() => {
+            const downInterval = setInterval(() => {
+                elapsedDown += 16;
+                const tDown = Math.min(elapsedDown/duration, 1);
+                const downY = lerp(endPosition.y, startPosition.y, tDown);
+                e.setLocalPosition(0, downY, 0);
+                if(tDown >= 1){
+                    clearInterval(downInterval);
+                    poppedBalls.splice(poppedBalls.indexOf(index), 1);
+                    setTimeout(() => {
+                        cooldowns.delete(index);
+                    }, 1000);
+                }
+            }, 16);
+        }, 600);
+    }
+
+    function hitBall(e){
+        window.addEventListener('keydown', (event) => {
+            const holeIndex = keyMapping[event.key.toUpperCase()];
+            if(holeIndex !== undefined && poppedBalls.includes(holeIndex) && canHit){
+                console.log(`Ball at ${holeIndex} hit!`);
+                window.location.href = "/gameplay/index.html";
+            }
+        });
+    }
+
+    function lerp(start, end, t){
+        return start + (end - start) * t;
+    }
+
+    setInterval(popUpBall, 600);
+    
 }

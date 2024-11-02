@@ -1,4 +1,4 @@
-import * as pc from "/node_modules/playcanvas";
+import * as pc from "./node_modules/playcanvas";
 
 window.onload = () => {
 

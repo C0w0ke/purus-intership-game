@@ -47,7 +47,7 @@ export function GameOver(finalScore){
     `;
     document.body.appendChild(gameOver);
     document.getElementById("retry-button").addEventListener("click", () => {
-        window.location.href = "index.html";
+        window.location.href = "./index.html";
     });
     document.getElementById("home-button").addEventListener("click", () => {
         window.location.href = "../index.html";

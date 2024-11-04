@@ -244,23 +244,5 @@ window.onload = () => {
             popUpBomb();
         }
     }, speed);
-
-    // const isSpecialBall = Math.random() < 0.2;
-    // if (isSpecialBall) {
-    //     const specialBallEntity = new pc.Entity("SpecialBall");
-    //     app.root.addChild(specialBallEntity);
-    //     specialBallEntity.addComponent("model", {
-    //         type: "asset",
-    //         asset: assets.specialBallAsset
-    //     });
-    //     specialBallEntity.setLocalScale(0.7, 0.7, 0.7);
-    //     specialBallEntity.setLocalPosition(0, 2, 0);
-    //     poppedBalls.push(random);
-    //     hitBall(specialBallEntity, true);
-    // } else {
-    //     ballEntity.setLocalPosition(0, 3, 0);
-    //     canHit = true;
-    //     hitBall(ballEntity);
-    // }
     
 }

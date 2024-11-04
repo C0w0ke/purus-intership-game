@@ -193,7 +193,7 @@ window.onload = () => {
             const holeIndex = keyMapping[event.key.toUpperCase()];
             if(holeIndex !== undefined && poppedBalls.includes(holeIndex) && canHit){
                 console.log(`Ball at ${holeIndex} hit!`);
-                window.location.href = "/gameplay/index.html";
+                window.location.href = "./gameplay/index.html";
             }
         });
     }
